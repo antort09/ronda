@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presensi & Informasi Ronda</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+          },
+          colors: {
+            brimo: {
+              navy: '#002B5B',
+              blue: '#00529C',
+              lightBlue: '#00A3FF',
+              accent: '#2563EB',
+              cardBg: '#1E293B',
+              bgLight: '#F1F5F9'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .brimo-gradient {
+      background: linear-gradient(135deg, #002B5B 0%, #00529C 50%, #0078D4 100%);
+    }
+  </style>
+</head>
+<body class="bg-brimo-bgLight font-sans min-h-screen flex flex-col justify-between text-slate-800">
+  <!-- MAIN CONTAINER -->
+  <div class="max-w-md mx-auto w-full pb-20">
+    
+    <!-- HEADER BRImo STYLE -->
+    <header class="brimo-gradient text-white pt-8 pb-14 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+      <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-brimo-lightBlue/20 rounded-full blur-2xl"></div>
+      <div class="flex items-center justify-between mb-4 relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
+            <i class="fa-solid fa-shield-halved text-2xl text-brimo-lightBlue"></i>
+          </div>
+          <div>
+            <h1 class="text-lg font-semibold leading-tight">Presensi Petugas</h1>
+          </div>
+        </div>
+        <div class="text-right">
+          <div id="liveClock" class="text-base font-semibold tracking-wider">00:00:00</div>
+          <div id="liveDate" class="text-[12px] text-blue-200">Selasa, 1 Jan 2026</div>
+        </div>
+      </div>
+      <!-- PETUGAS CARD / WELCOME -->
+      <div class="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center justify-between relative z-10">
+        <div>
+          <span class="text-[13px] text-blue-200 uppercase tracking-wider block">Nama Petugas</span>
+          <span id="headerOfficerName" class="font-semibold text-sm text-yellow-300">-</span>
+        </div>
+        <div id="loginBadge" class="px-2.5 py-1 bg-red-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1">
+          <i class="fa-solid fa-circle-xmark"></i> Offline
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="px-5 -mt-8 relative z-20 space-y-5">
+      <!-- KOTAK LOGIN -->
+      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-user-lock text-brimo-blue text-lg"></i>
+          <h2 class="font-medium text-base text-slate-800">Akses Petugas (Login)</h2>
+        </div>
+        <div class="flex gap-2 items-center">
+          <div class="relative flex-1">
+            <!-- Teks input diperbesar ke text-base dan padding disesuaikan -->
+            <input type="text" id="inputLogin" placeholder="Masukkan ID Login..." 
+              onkeydown="if(event.key === 'Enter') handleLogin()"
+              class="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base focus:outline-none focus:border-brimo-blue focus:ring-2 focus:ring-brimo-blue/20 transition-all">
+            <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          </div>
+          <!-- Tombol Masuk disesuaikan tingginya agar sejajar dengan kotak input -->
+          <button onclick="handleLogin()" 
+            class="bg-brimo-blue hover:bg-brimo-navy text-white px-5 py-3 rounded-xl font-medium text-base transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2">
+            <span>Masuk</span>
+            <i class="fa-solid fa-arrow-right-to-bracket text-sm"></i>
+          </button>
+        </div>
+        <p id="loginMessage" class="text-xs mt-2 hidden"></p>
+      </section>
+
+      <!-- SEKSI 1: PRESENSI (KEHADIRAN) -->
+      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-user-check text-emerald-600"></i>
+            <h2 class="font-medium text-base text-slate-800">Presensi (Kehadiran)</h2>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Tombol Absen Pulang -->
+          <button id="btnPulang" onclick="openLink('pulang')" disabled
+            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-right-from-bracket text-2xl mb-1.5"></i>
+            <span class="text-sm font-medium text-center leading-tight">Absen Pulang</span>
+          </button>
+          <!-- Tombol Catatan Kejadian -->
+          <button id="btnCatatan" onclick="openLink('catatan')" disabled
+            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-clipboard-list text-2xl mb-1.5"></i>
+            <span class="text-sm font-medium text-center leading-tight">Catatan</span>
+          </button>
+          <!-- Tombol Absen Masuk -->
+          <button id="btnMasuk" onclick="openLink('masuk')" disabled
+            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-right-to-bracket text-2xl mb-1.5"></i>
+            <span class="text-sm font-medium text-center leading-tight">Absen Masuk</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- SEKSI 2: INFORMASI RONDA HARI INI (PUBLIC) -->
+      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-circle-info text-brimo-blue"></i>
+            <h2 class="font-medium text-base text-slate-800">Informasi Ronda Hari Ini</h2>
+          </div>
+          <span class="text-[12px] bg-blue-50 text-brimo-blue font-medium px-2 py-0.5 rounded-full border border-blue-200">Live Sync</span>
+        </div>
+        <div id="infoRondaContainer" class="space-y-3">
+          <div class="text-center py-6 text-slate-400 text-xs">
+            <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
+            <p>Memuat data ronda...</p>
+          </div>
+        </div>
+        <!-- Waktu & Tanggal Info -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[13px] text-slate-500">
+          <div class="flex items-center gap-1">
+            <i class="fa-regular fa-clock text-slate-400"></i>
+            <span id="infoWaktuColL" class="font-medium text-slate-700">-</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <i class="fa-regular fa-calendar text-slate-400"></i>
+            <span id="infoTanggalToday">-</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEKSI 3: ABSENSI (KETIDAKHADIRAN) -->
+      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-user-xmark text-rose-600"></i>
+            <h2 class="font-medium text-base text-slate-800">Absensi (Ketidakhadiran)</h2>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <!-- Tombol Alpa -->
+          <button id="btnAlpa" onclick="openLink('alpa')" disabled
+            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-circle-exclamation text-rose-500 text-2xl mb-1.5"></i>
+            <span class="text-xs sm:text-sm font-medium text-slate-600">Alpa</span>
+          </button>
+          <!-- Tombol Non Presensi -->
+          <button id="btnNonPresensi" onclick="openLink('nonPresensi')" disabled
+            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-user-slash text-purple-500 text-2xl mb-1.5"></i>
+            <span class="text-xs sm:text-sm font-medium text-slate-600 text-center leading-tight">Non Presensi</span>
+          </button>
+          <!-- Tombol Izin -->
+          <button id="btnIzin" onclick="openLink('izin')" disabled
+            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
+            <i class="fa-solid fa-envelope-open-text text-amber-500 text-2xl mb-1.5"></i>
+            <span class="text-xs sm:text-sm font-medium text-slate-600">Izin</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-6 text-xs text-slate-400 mt-6">
+      Powered by <span class="font-semibold text-slate-600">Anto Design Concept &copy; 2026</span>
+    </footer>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let sheetData = [];
+    let currentUser = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      startClock();
+      fetchData();
+      setInterval(fetchData, 10000);
+      setInterval(evaluateButtonRules, 1000);
+    });
+
+    function startClock() {
+      const updateTime = () => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+        
+        document.getElementById('liveClock').innerText = timeStr;
+        document.getElementById('liveDate').innerText = dateStr;
+        document.getElementById('infoTanggalToday').innerText = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+      };
+      updateTime();
+      setInterval(updateTime, 1000);
+    }
+
+    function fetchData() {
+      fetch('https://script.google.com/macros/s/AKfycbzLPYW0i8n-uhuX4YRh2mjKidroKo00P_cGPRViRvIX2kVf3eFKomoaHK2lagdgj7VZ/exec?api=ronda')
+        .then(response => response.json())
+        .then(onDataSuccess)
+        .catch(onDataError);
+    }
+
+    function onDataSuccess(response) {
+      if (response.status === "success") {
+        sheetData = response.data;
+        
+        if (currentUser) {
+          const updatedUser = sheetData.find(item => item.loginId === currentUser.loginId);
+          if (updatedUser) {
+            currentUser = updatedUser;
+            document.getElementById('headerOfficerName').innerText = currentUser.namaPetugas || currentUser.loginId;
+          }
+        }
+        
+        renderPublicInfo();
+        evaluateButtonRules();
+      } else {
+        console.error("Server Error:", response.message);
+      }
+    }
+
+    function onDataError(err) {
+      console.error("Gagal mengambil data:", err);
+    }
+
+    function handleLogin() {
+      const loginVal = document.getElementById('inputLogin').value.trim();
+      
+      if (!loginVal) {
+        showLoginMsg("Masukkan ID Login terlebih dahulu!", "text-amber-600");
+        return;
+      }
+
+      const user = sheetData.find(item => item.loginId === loginVal);
+
+      if (user) {
+        currentUser = user;
+        document.getElementById('headerOfficerName').innerText = user.namaPetugas || user.loginId;
+        document.getElementById('loginBadge').className = "px-2.5 py-1 bg-emerald-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1";
+        document.getElementById('loginBadge').innerHTML = '<i class="fa-solid fa-circle-check"></i> Aktif';
+        
+        showLoginMsg(`Login berhasil! Selamat bertugas, ${user.namaPetugas || user.loginId}.`, "text-emerald-600");
+        evaluateButtonRules();
+      } else {
+        currentUser = null;
+        document.getElementById('headerOfficerName').innerText = "Belum Login";
+        document.getElementById('loginBadge').className = "px-2.5 py-1 bg-red-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1";
+        document.getElementById('loginBadge').innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Offline';
+        
+        showLoginMsg("ID Login tidak terdaftar!", "text-rose-600");
+        evaluateButtonRules();
+      }
+    }
+
+    function showLoginMsg(text, colorClass) {
+      const msgEl = document.getElementById('loginMessage');
+      msgEl.className = `text-xs mt-2 font-medium ${colorClass}`;
+      msgEl.innerText = text;
+      msgEl.classList.remove('hidden');
+    }
+
+    function renderPublicInfo() {
+      const container = document.getElementById('infoRondaContainer');
+      if (!sheetData || sheetData.length === 0) {
+        container.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">Tidak ada data ronda hari ini.</div>`;
+        return;
+      }
+
+      let html = '';
+      let lastWaktuInfo = '-';
+      const filteredData = sheetData.filter(row => row.rowIndex !== 4 && row.rowIndex !== 5);
+
+      filteredData.forEach((row, idx) => {
+        if (row.waktuInfo) lastWaktuInfo = row.waktuInfo;
+        html += `
+          <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex items-center justify-between hover:border-brimo-blue/30 transition-all">
+            <div>
+              <div class="font-normal text-base text-slate-800">${row.namaPetugas || 'Petugas ' + (idx + 1)}</div>
+              <div class="text-sm font-normal text-slate-600 mt-1 flex items-center gap-4">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-right-to-bracket text-emerald-500"></i> ${row.jamMasuk || '-'}</span>
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket text-blue-500"></i> ${row.jamPulang || '-'}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-md ${
+                row.status.toLowerCase().includes('hadir') || row.status.toLowerCase().includes('aktif') 
+                  ? 'bg-emerald-100 text-emerald-700' 
+                  : 'bg-slate-200 text-slate-600'
+              }">
+                ${row.status || 'Standby'}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      document.getElementById('infoWaktuColL').innerText = lastWaktuInfo || '-';
+    }
+
+    function evaluateButtonRules() {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const currentMin = hours * 60 + minutes;
+
+      const isTimeMasuk = currentMin >= 0 && currentMin <= 30;
+      const isTimePulang = currentMin >= 240 && currentMin <= 270;
+      const isTimeCatatan = currentMin >= 0 && currentMin <= 300;
+      const isTimeAbsensi = currentMin >= 0 && currentMin <= 360;
+
+      const isA2orA3 = currentUser && (currentUser.rowIndex === 2 || currentUser.rowIndex === 3);
+      const isA4orA5 = currentUser && (currentUser.rowIndex === 4 || currentUser.rowIndex === 5);
+
+      const isMasukEmpty = currentUser ? (currentUser.jamMasuk === "") : false;
+      const isPulangEmpty = currentUser ? (currentUser.jamPulang === "") : false;
+
+      const canAbsenMasuk = isTimeMasuk && isA2orA3 && isMasukEmpty;
+      setButtonState('btnMasuk', canAbsenMasuk, 'bg-emerald-600 text-white shadow-emerald-200', 'bg-slate-100 text-slate-400');
+
+      const canAbsenPulang = isTimePulang && isA2orA3 && isPulangEmpty;
+      setButtonState('btnPulang', canAbsenPulang, 'bg-blue-600 text-white shadow-blue-200', 'bg-slate-100 text-slate-400');
+
+      const canCatatan = isTimeCatatan && currentUser !== null;
+      setButtonState('btnCatatan', canCatatan, 'bg-amber-500 text-white shadow-amber-200', 'bg-slate-100 text-slate-400');
+
+      const canKetidakhadiran = isTimeAbsensi && isA4orA5;
+      setButtonState('btnIzin', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-amber-200 hover:bg-amber-50', 'bg-slate-100 text-slate-400');
+      setButtonState('btnAlpa', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-rose-200 hover:bg-rose-50', 'bg-slate-100 text-slate-400');
+      setButtonState('btnNonPresensi', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-purple-200 hover:bg-purple-50', 'bg-slate-100 text-slate-400');
+    }
+
+    function setButtonState(btnId, enabled, activeClass, inactiveClass) {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+
+      btn.disabled = !enabled;
+      if (enabled) {
+        btn.className = btn.className.replace(inactiveClass, activeClass);
+        btn.classList.add('shadow-md', 'active:scale-95', 'cursor-pointer');
+      } else {
+        btn.className = btn.className.replace(activeClass, inactiveClass);
+        btn.classList.remove('shadow-md', 'active:scale-95', 'cursor-pointer');
+      }
+    }
+
+    function openLink(type) {
+      if (!currentUser) return;
+      let url = "";
+
+      switch(type) {
+        case 'masuk': url = currentUser.linkAbsenMasuk; break;
+        case 'pulang': url = currentUser.linkAbsenPulang; break;
+        case 'catatan': url = currentUser.linkCatatan; break;
+        case 'izin': url = currentUser.linkIzin; break;
+        case 'alpa': url = currentUser.linkAlpa; break;
+        case 'nonPresensi': url = currentUser.linkNonPresensi; break;
+      }
+
+      if (url && url.startsWith('http')) {
+        window.open(url, '_blank');
+      } else if (url) {
+        window.open('https://' + url, '_blank');
+      } else {
+        alert("Link tidak tersedia pada spreadsheet!");
+      }
+    }
+  </script>
+</body>
+</html>
