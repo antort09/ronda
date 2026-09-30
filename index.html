@@ -2,399 +2,856 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presensi & Informasi Ronda</title>
-  <!-- Tailwind CSS -->
+  <!-- Viewport dengan Zoom In / Zoom Out Diaktifkan -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=5.0, user-scalable=yes">
+  <title>Absensi Ronda Malam RT</title>
+  <!-- Frontend GitHub Pages - Backend Google Apps Script -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Font Awesome Icons -->
+  <!-- FontAwesome CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts: Poppins -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Poppins', 'sans-serif'],
-          },
-          colors: {
-            brimo: {
-              navy: '#002B5B',
-              blue: '#00529C',
-              lightBlue: '#00A3FF',
-              accent: '#2563EB',
-              cardBg: '#1E293B',
-              bgLight: '#F1F5F9'
-            }
-          }
-        }
-      }
-    }
-  </script>
   <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f1f5f9;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .header-gradient {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #2563eb 100%);
+    }
     .glass-card {
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
     }
-    .brimo-gradient {
-      background: linear-gradient(135deg, #002B5B 0%, #00529C 50%, #0078D4 100%);
+  
+    /* Tombol admin: tetap terlihat saat nonaktif, hanya mencegah klik */
+    #sectionKetidakhadiran button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
     }
-  </style>
+    </style>
 </head>
-<body class="bg-brimo-bgLight font-sans min-h-screen flex flex-col justify-between text-slate-800">
-  <!-- MAIN CONTAINER -->
-  <div class="max-w-md mx-auto w-full pb-20">
-    
-    <!-- HEADER BRImo STYLE -->
-    <header class="brimo-gradient text-white pt-8 pb-14 px-6 rounded-b-[2.5rem] shadow-xl relative overflow-hidden">
-      <div class="absolute -right-10 -top-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
-      <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-brimo-lightBlue/20 rounded-full blur-2xl"></div>
-      <div class="flex items-center justify-between mb-4 relative z-10">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
-            <i class="fa-solid fa-shield-halved text-2xl text-brimo-lightBlue"></i>
+<body class="min-h-screen pb-10">
+
+  <!-- HEADER GRADIENT -->
+  <div class="header-gradient text-white pt-6 pb-16 px-4 rounded-b-3xl shadow-xl relative">
+    <div class="max-w-md mx-auto text-center space-y-2">
+      <!-- Live Clock & Date (Ukuran Dipertahankan) -->
+      <div class="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full inline-block border border-white/20">
+        <i class="far me-1.5 fa-clock text-cyan-300"></i>
+        <span id="liveDate" class="text-sm text-slate-200"></span>
+        <span id="liveClock" class="font-mono font-bold text-base text-yellow-300 ms-2"></span>
+      </div>
+
+      <!-- Judul Diperbesar -->
+      <h1 class="text-xl font-bold tracking-wide pt-1">ABSENSI DAN INFORMASI RONDA</h1>
+      
+      <!-- Petugas Name Display & Tombol Keluar (Reset) -->
+      <div class="text-base font-medium text-blue-100 flex items-center justify-center gap-2 pt-1">
+        <i class="fas fa-user-circle text-cyan-400 text-lg"></i>
+        <span>Petugas: <strong id="officerNameDisplay" class="text-white font-bold">Belum Login</strong></span>
+        
+        <!-- Tombol Reset / Keluar -->
+        <button id="btnLogout" onclick="doLogout()" class="hidden bg-rose-500/80 hover:bg-rose-600 active:scale-95 text-white text-xs font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 shadow">
+          <i class="fas fa-power-off"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </div>
+
+<!-- MAIN CONTAINER -->
+<div class="max-w-md mx-auto px-4 -mt-10 relative z-10 space-y-5">
+
+  <!-- ============================= -->
+  <!-- KOTAK LOGIN -->
+  <!-- ============================= -->
+  <div id="loginCard" class="glass-card p-4 rounded-2xl shadow-lg border border-slate-100 mx-2">
+
+    <label class="text-base font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+      <i class="fas fa-key text-blue-600 me-1"></i> Silakan Login
+    </label>
+
+    <div class="flex gap-2">
+
+      <input
+        type="text"
+        id="loginCodeInput"
+        placeholder="Login disini"
+        class="w-full px-3.5 py-2.5 text-lg border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-wide"
+        onkeypress="if(event.key==='Enter') doLogin()"
+      >
+
+      <button
+        onclick="doLogin()"
+        class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-6 py-2.5 rounded-xl text-base transition-all shadow-md flex items-center gap-1.5 shrink-0"
+      >
+        <span>Masuk</span>
+        <i class="fas fa-arrow-right text-sm"></i>
+      </button>
+
+    </div>
+
+    <p id="loginStatus" class="text-sm font-medium mt-2 hidden"></p>
+
+  </div>
+
+
+  <!-- ============================= -->
+  <!-- SEKSI KEHADIRAN -->
+  <!-- ============================= -->
+    <div id="sectionKehadiran" class="hidden px-3">
+
+      <h2 class="text-base font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+        <i class="fas fa-fingerprint text-emerald-600 me-1.5"></i>
+        Absen Kehadiran
+      </h2>
+
+
+      <!-- 3 TOMBOL DALAM 1 BARIS -->
+      <div class="grid grid-cols-3 gap-2.5">
+
+        <!-- ABSEN MASUK -->
+        <button
+          id="btnAbsenMasuk"
+          onclick="triggerAbsen('Absen Masuk')"
+          disabled
+          class="w-full min-h-[125px] py-3 px-2 rounded-xl text-white font-bold flex flex-col items-center justify-center shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700"
+        >
+
+          <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-lg mb-2">
+            <i class="fas fa-sign-in-alt"></i>
           </div>
-          <div>
-            <h1 class="text-base font-semibold leading-tight">Presensi Petugas</h1>
+
+          <div class="text-center leading-tight text-base">
+            Absen Masuk
           </div>
+
+          <div class="text-xs font-normal opacity-85 mt-1">
+            00.00 – 00.30
+          </div>
+
+        </button>
+
+
+        <!-- ABSEN PULANG -->
+        <button
+          id="btnAbsenPulang"
+          onclick="triggerAbsen('Absen Pulang')"
+          disabled
+          class="w-full min-h-[125px] py-3 px-2 rounded-xl text-white font-bold flex flex-col items-center justify-center shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-rose-600 hover:bg-rose-700"
+        >
+
+          <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-lg mb-2">
+            <i class="fas fa-sign-out-alt"></i>
+          </div>
+
+          <div class="text-center leading-tight text-base">
+            Absen Pulang
+          </div>
+
+          <div class="text-xs font-normal opacity-85 mt-1">
+            04.00 – 04.30
+          </div>
+
+        </button>
+
+        <!-- CATATAN KEJADIAN -->
+        <button
+          id="btnCatatanKejadian"
+          onclick="openNoteModal()"
+          disabled
+          class="w-full min-h-[125px] py-3 px-2 rounded-xl text-white font-bold flex flex-col items-center justify-center shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-amber-500 hover:bg-amber-600"
+        >
+
+          <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-lg mb-2">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+
+          <div class="text-center leading-tight text-base">
+            Catatan Khusus
+          </div>
+
+          <div class="text-xs font-normal opacity-90 mt-1 text-center">
+            Kejadian/Keadaan
+          </div>
+
+        </button>
+
+      </div>
+
+    </div>
+
+  <!-- ============================= -->
+  <!-- SEKSI KETIDAKHADIRAN -->
+  <!-- ============================= -->
+    <div id="sectionKetidakhadiran" class="hidden px-3">
+
+      <h2 class="text-base font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+        <i class="fas fa-user-shield text-purple-600 text-base me-1.5"></i>
+        Absen Ketidakhadiran
+      </h2>
+
+
+      <div class="grid grid-cols-3 gap-2.5">
+
+        <!-- IZIN -->
+        <button
+          id="btnIzin"
+          onclick="triggerKetidakhadiran('Izin')"
+          class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
+        >
+          <i class="fas fa-file-signature text-base"></i>
+          Izin
+        </button>
+
+
+        <!-- ALPA -->
+        <button
+          id="btnAlpa"
+          onclick="triggerKetidakhadiran('Alpa')"
+          class="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
+        >
+          <i class="fas fa-user-times text-base"></i>
+          Alpa
+        </button>
+
+
+        <!-- NON PRESENSI -->
+        <button
+          id="btnNonPresensi"
+          onclick="triggerKetidakhadiran('Non Presensi')"
+          class="py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
+        >
+          <i class="fas fa-minus-circle text-base"></i>
+          Non Presensi
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- SEKSI INFORMASI KEHADIRAN -->
+    <!-- ============================= -->
+    <div id="informationCard" class="glass-card p-4 rounded-2xl shadow-lg border border-slate-100 mx-2">
+      <div class="flex items-center justify-between pb-2.5">
+
+        <h2 class="text-base font-bold text-slate-700 flex items-center gap-1.5">
+          <i class="fas fa-info-circle text-blue-600 me-1"></i>
+          Informasi Kehadiran
+        </h2>
+
+        <span
+          id="relativeTimeDisplay"
+          class="text-sm text-gray-400 font-normal px-2.5 py-1 rounded-full"
+        ></span>
+
+      </div>
+
+
+      <!-- STATUS PETUGAS -->
+      <div id="infoContentContainer" class="space-y-2 mt-1">
+
+        <div class="text-center py-4 text-sm text-slate-400">
+          <i class="fas fa-spinner fa-spin me-1"></i>
+          Memuat data...
         </div>
-        <div class="text-right">
-          <div id="liveClock" class="text-base font-semibold tracking-wider">00:00:00</div>
-          <div id="liveDate" class="text-[11px] text-blue-200">Selasa, 1 Jan 2026</div>
+
+      </div>
+
+
+      <!-- CATATAN KEJADIAN HARI INI -->
+      <div class="pt-3 mt-3">
+
+        <h3 class="text-base font-bold text-slate-700 mb-2.5 flex items-center gap-1.5">
+          <i class="fas fa-book-open text-amber-500"></i>
+          Catatan Khusus
+        </h3>
+
+        <div id="notesTableContainer" class="overflow-x-auto">
+          <p class="text-base text-slate-400 italic">
+            Belum ada catatan kejadian/keadaan khusus
+          </p>
         </div>
       </div>
-      <!-- PETUGAS CARD / WELCOME -->
-      <div class="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center justify-between relative z-10">
-        <div>
-          <span class="text-[13px] text-blue-200 uppercase tracking-wider block">Nama Petugas</span>
-          <span id="headerOfficerName" class="font-semibold text-sm text-yellow-300">-</span>
-        </div>
-        <div id="loginBadge" class="px-2.5 py-1 bg-red-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1">
-          <i class="fa-solid fa-circle-xmark"></i> Offline
-        </div>
+    </div>
+</div>
+  <!-- ============================= -->
+  <!-- MODAL ALERT -->
+  <!-- ============================= -->
+  <div
+    id="alertModal"
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+  >
+
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl space-y-3">
+      <div
+        id="modalIcon"
+        class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 mx-auto flex items-center justify-center text-2xl"
+      >
+        <i class="fas fa-check"></i>
       </div>
-    </header>
 
-    <!-- CONTENT WRAPPER -->
-    <main class="px-5 -mt-8 relative z-20 space-y-5">
-      <!-- KOTAK LOGIN -->
-      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
-        <div class="flex items-center gap-2 mb-3">
-          <i class="fa-solid fa-user-lock text-brimo-blue text-lg"></i>
-          <h2 class="font-medium text-sm text-slate-800"> Akses Petugas (Login)</h2>
-        </div>
-        <div class="flex gap-2 items-center">
-          <div class="relative flex-1">
-            <!-- Teks input diperbesar ke text-sm dan padding disesuaikan -->
-            <input type="text" id="inputLogin" placeholder="Masukkan ID Login..." 
-              onkeydown="if(event.key === 'Enter') handleLogin()"
-              class="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brimo-blue focus:ring-2 focus:ring-brimo-blue/20 transition-all">
-            <i class="fa-solid fa-key absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-          </div>
-          <!-- Tombol Masuk disesuaikan tingginya agar sejajar dengan kotak input -->
-          <button onclick="handleLogin()" 
-            class="bg-brimo-blue hover:bg-brimo-navy text-white px-5 py-3 rounded-xl font-medium text-base transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2">
-            <span>Masuk</span>
-            <i class="fa-solid fa-arrow-right-to-bracket text-sm"></i>
-          </button>
-        </div>
-        <p id="loginMessage" class="text-xs mt-2 hidden"></p>
-      </section>
+      <h3 id="modalTitle" class="text-lg font-bold text-slate-800">
+        Informasi
+      </h3>
 
-      <!-- SEKSI 1: PRESENSI (KEHADIRAN) -->
-      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-user-check text-emerald-600"></i>
-            <h2 class="font-medium text-sm text-slate-800"> Presensi (Kehadiran)</h2>
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <!-- Tombol Absen Pulang -->
-          <button id="btnPulang" onclick="openLink('pulang')" disabled
-            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-right-from-bracket text-2xl mb-1.5"></i>
-            <span class="text-sm font-medium text-center leading-tight">Absen Pulang</span>
-          </button>
-          <!-- Tombol Catatan Kejadian -->
-          <button id="btnCatatan" onclick="openLink('catatan')" disabled
-            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-clipboard-list text-2xl mb-1.5"></i>
-            <span class="text-sm font-medium text-center leading-tight">Catatan</span>
-          </button>
-          <!-- Tombol Absen Masuk -->
-          <button id="btnMasuk" onclick="openLink('masuk')" disabled
-            class="flex flex-col items-center justify-center p-3.5 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-right-to-bracket text-2xl mb-1.5"></i>
-            <span class="text-sm font-medium text-center leading-tight">Absen Masuk</span>
-          </button>
-        </div>
-      </section>
+      <p id="modalMessage" class="text-base text-slate-600 leading-relaxed"></p>
 
-      <!-- SEKSI 2: INFORMASI RONDA HARI INI (PUBLIC) -->
-      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-circle-info text-brimo-blue"></i>
-            <h2 class="font-medium text-sm text-slate-800"> Ronda Hari Ini</h2>
-          </div>
-          <span class="text-[10px] bg-blue-50 text-brimo-blue font-medium px-2 py-0.5 rounded-full border border-blue-200">update</span>
-        </div>
-        <div id="infoRondaContainer" class="space-y-3">
-          <div class="text-center py-6 text-slate-400 text-xs">
-            <i class="fa-solid fa-spinner fa-spin text-lg mb-2"></i>
-            <p>Memuat data ronda...</p>
-          </div>
-        </div>
-        <!-- Waktu & Tanggal Info -->
-        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[13px] text-slate-500">
-          <div class="flex items-center gap-1">
-            <i class="fa-regular fa-clock text-slate-400"></i>
-            <span id="infoWaktuColL" class="font-medium text-slate-700">-</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <i class="fa-regular fa-calendar text-slate-400"></i>
-            <span id="infoTanggalToday">-</span>
-          </div>
-        </div>
-      </section>
+      <button
+        onclick="closeModal('alertModal')"
+        class="w-full py-2.5 bg-blue-600 text-white rounded-xl text-base font-bold hover:bg-blue-700 transition"
+      >
+        Selesai
+      </button>
 
-      <!-- SEKSI 3: ABSENSI (KETIDAKHADIRAN) -->
-      <section class="glass-card rounded-2xl p-5 shadow-lg border border-slate-100">
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-user-xmark text-rose-600"></i>
-            <h2 class="font-medium text-sm text-slate-800"> Absensi (Ketidakhadiran)</h2>
-          </div>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <!-- Tombol Alpa -->
-          <button id="btnAlpa" onclick="openLink('alpa')" disabled
-            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-circle-exclamation text-rose-500 text-2xl mb-1.5"></i>
-            <span class="text-xs sm:text-sm font-medium text-slate-600">Alpa</span>
-          </button>
-          <!-- Tombol Non Presensi -->
-          <button id="btnNonPresensi" onclick="openLink('nonPresensi')" disabled
-            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-user-slash text-purple-500 text-2xl mb-1.5"></i>
-            <span class="text-xs sm:text-sm font-medium text-slate-600 text-center leading-tight">Non Presensi</span>
-          </button>
-          <!-- Tombol Izin -->
-          <button id="btnIzin" onclick="openLink('izin')" disabled
-            class="flex flex-col items-center justify-center p-3 bg-slate-100 text-slate-400 rounded-xl transition-all border border-slate-200 disabled:opacity-80 disabled:cursor-not-allowed">
-            <i class="fa-solid fa-envelope-open-text text-amber-500 text-2xl mb-1.5"></i>
-            <span class="text-xs sm:text-sm font-medium text-slate-600">Izin</span>
-          </button>
-        </div>
-      </section>
-    </main>
+    </div>
 
-    <!-- FOOTER -->
-    <footer class="text-center py-6 text-xs text-slate-400 mt-6">
-      Powered by <span class="font-semibold text-slate-600">Anto Design Concept &copy; 2026</span>
-    </footer>
+  </div>
+
+  <!-- MODAL CATATAN KEJADIAN -->
+  <div id="noteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-3.5">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-1.5">
+          <i class="fas fa-edit text-amber-500"></i> Input Catatan Kejadian
+        </h3>
+        <button onclick="closeModal('noteModal')" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <textarea id="noteInput" rows="3" placeholder="Tuliskan catatan kejadian..." 
+        class="w-full p-3 text-lg border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+      <div class="flex gap-2">
+        <button onclick="closeModal('noteModal')" class="w-1/2 py-2.5 bg-slate-200 text-slate-700 rounded-xl text-base font-bold">Batal</button>
+        <button onclick="saveNote()" class="w-1/2 py-2.5 bg-amber-500 text-white rounded-xl text-base font-bold hover:bg-amber-600 shadow">Simpan</button>
+      </div>
+    </div>
   </div>
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    let sheetData = [];
     let currentUser = null;
+    let todayAttendanceData = {};
+    let todayNotesData = [];
 
-    document.addEventListener("DOMContentLoaded", () => {
-      startClock();
-      fetchData();
-      setInterval(fetchData, 10000);
-      setInterval(evaluateButtonRules, 1000);
-    });
+    // ==========================================================
+    // BACKEND GOOGLE APPS SCRIPT
+    // Ganti URL di bawah dengan URL Web App Apps Script Anda.
+    // Contoh: https://script.google.com/macros/s/AKfycb.../exec
+    // ==========================================================
+    const API_URL = "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
 
-    function startClock() {
-      const updateTime = () => {
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString('id-ID', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-        
-        document.getElementById('liveClock').innerText = timeStr;
-        document.getElementById('liveDate').innerText = dateStr;
-        document.getElementById('infoTanggalToday').innerText = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-      };
-      updateTime();
-      setInterval(updateTime, 1000);
-    }
-
-    function fetchData() {
-      fetch('https://script.google.com/macros/s/AKfycbzLPYW0i8n-uhuX4YRh2mjKidroKo00P_cGPRViRvIX2kVf3eFKomoaHK2lagdgj7VZ/exec?api=ronda')
-        .then(response => response.json())
-        .then(onDataSuccess)
-        .catch(onDataError);
-    }
-
-    function onDataSuccess(response) {
-      if (response.status === "success") {
-        sheetData = response.data;
-        
-        if (currentUser) {
-          const updatedUser = sheetData.find(item => item.loginId === currentUser.loginId);
-          if (updatedUser) {
-            currentUser = updatedUser;
-            document.getElementById('headerOfficerName').innerText = currentUser.namaPetugas || currentUser.loginId;
-          }
+    // Komunikasi GitHub Pages -> Google Apps Script menggunakan JSONP.
+    // Cara ini tidak memerlukan google.script.run.
+    function apiRequest(params) {
+      return new Promise((resolve, reject) => {
+        if (!API_URL || API_URL.includes("PASTE_URL")) {
+          reject(new Error("API_URL belum diisi."));
+          return;
         }
-        
-        renderPublicInfo();
-        evaluateButtonRules();
-      } else {
-        console.error("Server Error:", response.message);
-      }
-    }
 
-    function onDataError(err) {
-      console.error("Gagal mengambil data:", err);
-    }
+        const callbackName = "sapaRondaCallback_" + Date.now() + "_" +
+          Math.random().toString(36).slice(2);
 
-    function handleLogin() {
-      const loginVal = document.getElementById('inputLogin').value.trim();
-      
-      if (!loginVal) {
-        showLoginMsg("Masukkan ID Login terlebih dahulu!", "text-amber-600");
-        return;
-      }
+        const script = document.createElement("script");
+        const query = new URLSearchParams(params);
+        query.set("callback", callbackName);
+        script.src = API_URL + (API_URL.includes("?") ? "&" : "?") + query.toString();
 
-      const user = sheetData.find(item => item.loginId === loginVal);
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("Server tidak merespons."));
+        }, 15000);
 
-      if (user) {
-        currentUser = user;
-        document.getElementById('headerOfficerName').innerText = user.namaPetugas || user.loginId;
-        document.getElementById('loginBadge').className = "px-2.5 py-1 bg-emerald-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1";
-        document.getElementById('loginBadge').innerHTML = '<i class="fa-solid fa-circle-check"></i> Aktif';
-        
-        showLoginMsg(`Login berhasil! Selamat bertugas, ${user.namaPetugas || user.loginId}.`, "text-emerald-600");
-        evaluateButtonRules();
-      } else {
-        currentUser = null;
-        document.getElementById('headerOfficerName').innerText = "Belum Login";
-        document.getElementById('loginBadge').className = "px-2.5 py-1 bg-red-500/80 text-white text-[10px] font-semibold rounded-full flex items-center gap-1";
-        document.getElementById('loginBadge').innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Offline';
-        
-        showLoginMsg("ID Login tidak terdaftar!", "text-rose-600");
-        evaluateButtonRules();
-      }
-    }
+        function cleanup() {
+          clearTimeout(timer);
+          delete window[callbackName];
+          script.remove();
+        }
 
-    function showLoginMsg(text, colorClass) {
-      const msgEl = document.getElementById('loginMessage');
-      msgEl.className = `text-xs mt-2 font-medium ${colorClass}`;
-      msgEl.innerText = text;
-      msgEl.classList.remove('hidden');
-    }
+        window[callbackName] = function(res) {
+          cleanup();
+          resolve(res);
+        };
 
-    function renderPublicInfo() {
-      const container = document.getElementById('infoRondaContainer');
-      if (!sheetData || sheetData.length === 0) {
-        container.innerHTML = `<div class="text-center py-4 text-xs text-slate-400">Tidak ada data ronda hari ini.</div>`;
-        return;
-      }
+        script.onerror = function() {
+          cleanup();
+          reject(new Error("Gagal menghubungi server Apps Script."));
+        };
 
-      let html = '';
-      let lastWaktuInfo = '-';
-      const filteredData = sheetData.filter(row => row.rowIndex !== 4 && row.rowIndex !== 5);
-
-      filteredData.forEach((row, idx) => {
-        if (row.waktuInfo) lastWaktuInfo = row.waktuInfo;
-        html += `
-          <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex items-center justify-between hover:border-brimo-blue/30 transition-all">
-            <div>
-              <div class="font-normal text-sm text-slate-800">${row.namaPetugas || 'Petugas ' + (idx + 1)}</div>
-              <div class="text-xs font-normal text-slate-600 mt-1 flex items-center gap-4">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-right-to-bracket text-emerald-500"></i> ${row.jamMasuk || '-'}</span>
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-right-from-bracket text-blue-500"></i> ${row.jamPulang || '-'}</span>
-              </div>
-            </div>
-            <div class="text-right">
-              <span class="px-2.5 py-1 text-xs font-semibold rounded-md ${
-                row.status.toLowerCase().includes('hadir') || row.status.toLowerCase().includes('aktif') 
-                  ? 'bg-emerald-100 text-emerald-700' 
-                  : 'bg-slate-200 text-slate-600'
-              }">
-                ${row.status || 'Standby'}
-              </span>
-            </div>
-          </div>
-        `;
+        document.body.appendChild(script);
       });
-
-      container.innerHTML = html;
-      document.getElementById('infoWaktuColL').innerText = lastWaktuInfo || '-';
     }
 
-    function evaluateButtonRules() {
+    // 1. RUNNING CLOCK & EVALUASI STATUS
+    function updateClock() {
       const now = new Date();
+      
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('liveClock').innerText = `${hh}:${mm}:${ss}`;
+
+      const options = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+      document.getElementById('liveDate').innerText = now.toLocaleDateString('id-ID', options);
+
+      evaluateButtonStates(now);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // SINKRONISASI DATA OTOMATIS SETIAP 10 DETIK
+    setInterval(fetchData, 10000);
+
+    // 2. LOGIKA LOGIN & LOGOUT
+    function doLogin() {
+      const code = document.getElementById('loginCodeInput').value.trim();
+      if (!code) return;
+
+      const statusEl = document.getElementById('loginStatus');
+      statusEl.className = "text-sm font-medium mt-2 text-blue-600 flex items-center gap-1";
+      statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memeriksa kode...';
+      statusEl.classList.remove('hidden');
+
+      apiRequest({
+        action: "login",
+        code: code
+      })
+      .then(res => {
+        if (res.success) {
+          currentUser = res;
+          document.getElementById('officerNameDisplay').innerText = res.user.name;
+          document.getElementById('btnLogout').classList.remove('hidden');
+
+          statusEl.className = "text-sm font-medium mt-2 text-emerald-600";
+          statusEl.innerText = `Login Berhasil (${res.user.role.toUpperCase()})`;
+
+          const loginCode = String(currentUser.code || '').trim().toUpperCase();
+          const isAdminUser = (loginCode === 'ADMIN01' || loginCode === 'ADMIN02');
+
+          const now = new Date();
+          const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+          // Waktu login yang diperbolehkan: 00.00 - 04.30
+          const isLoginWindow = currentMinutes >= 0 && currentMinutes <= 300;
+
+          if (isAdminUser) {
+            document.getElementById('sectionKehadiran').classList.add('hidden');
+          } else if (!isLoginWindow) {
+            document.getElementById('sectionKehadiran').classList.add('hidden');
+
+            document.getElementById('loginStatus').innerHTML =
+              '<i class="fas fa-clock me-1"></i> Absen berlaku mulai jam 00.00 s.d 04.30';
+
+            document.getElementById('loginStatus').className =
+              "text-sm font-medium mt-2 text-amber-600";
+          } else {
+            document.getElementById('sectionKehadiran').classList.remove('hidden');
+          }
+
+          evaluateButtonStates(new Date());
+          updateClock();
+          fetchData();
+        } else {
+          statusEl.className = "text-sm font-medium mt-2 text-red-600";
+          statusEl.innerText = res.message || "Login gagal.";
+        }
+      })
+      .catch(err => {
+        statusEl.className = "text-sm font-medium mt-2 text-red-600";
+        statusEl.innerText = err.message;
+      });
+    }
+
+    function doLogout() {
+      currentUser = null;
+      document.getElementById('officerNameDisplay').innerText = "Belum Login";
+      document.getElementById('loginCodeInput').value = "";
+      document.getElementById('loginStatus').classList.add('hidden');
+      document.getElementById('btnLogout').classList.add('hidden');
+      
+      document.getElementById('sectionKehadiran').classList.add('hidden');
+      document.getElementById('sectionKetidakhadiran').classList.add('hidden');
+      
+      updateClock();
+    }
+
+    // 3. ATURAN WAKTU & AKTIVASI TOMBOL
+    function evaluateButtonStates(now) {
       const hours = now.getHours();
       const minutes = now.getMinutes();
-      const currentMin = hours * 60 + minutes;
+      const currentMinutes = hours * 60 + minutes;
 
-      const isTimeMasuk = currentMin >= 0 && currentMin <= 30;
-      const isTimePulang = currentMin >= 240 && currentMin <= 270;
-      const isTimeCatatan = currentMin >= 0 && currentMin <= 300;
-      const isTimeAbsensi = currentMin >= 0 && currentMin <= 360;
+      // Jadwal tombol
+      const isMasukWindow = (currentMinutes >= 0 && currentMinutes <= 30);     // 00.00 - 00.30
+      const isPulangWindow = (currentMinutes >= 240 && currentMinutes <= 300); // 04.00 - 04.30
+      const isAdminWindow = (currentMinutes >= 0 && currentMinutes <= 360);    // 00.00 - 06.00
 
-      const isA2orA3 = currentUser && (currentUser.rowIndex === 2 || currentUser.rowIndex === 3);
-      const isA4orA5 = currentUser && (currentUser.rowIndex === 4 || currentUser.rowIndex === 5);
+      let hasMasuk = false;
+      let hasPulang = false;
 
-      const isMasukEmpty = currentUser ? (currentUser.jamMasuk === "") : false;
-      const isPulangEmpty = currentUser ? (currentUser.jamPulang === "") : false;
+      if (currentUser && currentUser.user && todayAttendanceData[currentUser.user.name]) {
+        hasMasuk = todayAttendanceData[currentUser.user.name].masuk !== "-";
+        hasPulang = todayAttendanceData[currentUser.user.name].pulang !== "-";
+      }
 
-      const canAbsenMasuk = isTimeMasuk && isA2orA3 && isMasukEmpty;
-      setButtonState('btnMasuk', canAbsenMasuk, 'bg-emerald-600 text-white shadow-emerald-200', 'bg-slate-100 text-slate-400');
+      const btnMasuk = document.getElementById('btnAbsenMasuk');
+      const btnPulang = document.getElementById('btnAbsenPulang');
+      const btnKejadian = document.getElementById('btnCatatanKejadian');
 
-      const canAbsenPulang = isTimePulang && isA2orA3 && isPulangEmpty;
-      setButtonState('btnPulang', canAbsenPulang, 'bg-blue-600 text-white shadow-blue-200', 'bg-slate-100 text-slate-400');
+      // Tombol utama selalu reset dulu
+      btnMasuk.disabled = true;
+      btnPulang.disabled = true;
+      btnKejadian.disabled = true;
 
-      const canCatatan = isTimeCatatan && currentUser !== null;
-      setButtonState('btnCatatan', canCatatan, 'bg-amber-500 text-white shadow-amber-200', 'bg-slate-100 text-slate-400');
+      // =============================
+      // USER YANG SUDAH LOGIN
+      // =============================
+      if (currentUser) {
 
-      const canKetidakhadiran = isTimeAbsensi && isA4orA5;
-      setButtonState('btnIzin', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-amber-200 hover:bg-amber-50', 'bg-slate-100 text-slate-400');
-      setButtonState('btnAlpa', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-rose-200 hover:bg-rose-50', 'bg-slate-100 text-slate-400');
-      setButtonState('btnNonPresensi', canKetidakhadiran, 'bg-white text-slate-700 shadow-md border-purple-200 hover:bg-purple-50', 'bg-slate-100 text-slate-400');
-    }
+        // A. ABSEN MASUK: 00.00 - 00.30 jika belum absen
+        if (isMasukWindow && !hasMasuk) {
+          btnMasuk.disabled = false;
+        }
 
-    function setButtonState(btnId, enabled, activeClass, inactiveClass) {
-      const btn = document.getElementById(btnId);
-      if (!btn) return;
+        // B. CATATAN KEJADIAN & ABSEN PULANG
+        if (hasMasuk) {
+          btnMasuk.disabled = true;
 
-      btn.disabled = !enabled;
-      if (enabled) {
-        btn.className = btn.className.replace(inactiveClass, activeClass);
-        btn.classList.add('shadow-md', 'active:scale-95', 'cursor-pointer');
+          // Catatan aktif sejak Absen Masuk sampai Absen Pulang atau jam 5.00
+          btnKejadian.disabled = hasPulang || currentMinutes >= 300;
+
+          // Absen Pulang: 04.00 - 04.30 jika belum absen pulang
+          if (isPulangWindow && !hasPulang) {
+            btnPulang.disabled = false;
+          }
+        }
+
+        // =============================
+        // C. KETIDAKHADIRAN ADMIN
+        // =============================
+        const adminSection = document.getElementById('sectionKetidakhadiran');
+        const btnIzin = document.getElementById('btnIzin');
+        const btnAlpa = document.getElementById('btnAlpa');
+        const btnNonPresensi = document.getElementById('btnNonPresensi');
+
+        // Normalisasi kode agar Admin01/Admin02 tetap terbaca
+        // meskipun format dari server berbeda huruf besar/kecil.
+        const loginCode = String(currentUser.code || '').trim().toUpperCase();
+        const isAdminUser = (loginCode === 'ADMIN01' || loginCode === 'ADMIN02');
+
+        if (isAdminUser) {
+          // Admin selalu melihat bagian Ketidakhadiran.
+          // Di luar jadwal, tombol terlihat tetapi tidak dapat diklik.
+          adminSection.classList.remove('hidden');
+
+          const adminButtons = [btnIzin, btnAlpa, btnNonPresensi];
+          adminButtons.forEach(btn => {
+            if (btn) btn.disabled = !isAdminWindow;
+          });
+        } else {
+          // User biasa tidak melihat bagian Ketidakhadiran.
+          adminSection.classList.add('hidden');
+        }
       } else {
-        btn.className = btn.className.replace(activeClass, inactiveClass);
-        btn.classList.remove('shadow-md', 'active:scale-95', 'cursor-pointer');
+        // Belum login
+        document.getElementById('sectionKetidakhadiran').classList.add('hidden');
       }
     }
 
-    function openLink(type) {
+    // 4. AMBIL DATA SINKRONISASI
+    function fetchData() {
+      apiRequest({
+        action: "today"
+      })
+      .then(res => {
+        if (res && res.success) {
+          todayAttendanceData = res.attendance;
+          todayNotesData = res.notes;
+          renderInformationSection();
+          if (currentUser) updateClock();
+        }
+      })
+      .catch(err => {
+        console.warn("Sinkronisasi gagal:", err.message);
+      });
+    }
+
+    // 5. RENDER INFORMASI KEHADIRAN
+    function renderInformationSection() {
+      const now = new Date();
+      const currentHours = now.getHours();
+
+      // Reset data pada jam 23.00 WITA
+      if (currentHours === 23) {
+        document.getElementById('infoContentContainer').innerHTML = `
+          <div class="text-center py-6 text-slate-400 text-sm">
+            <i class="fas fa-moon text-xl mb-1 block text-slate-300"></i>
+            Informasi ronda menunggu hari berikutnya.
+          </div>`;
+        document.getElementById('notesTableContainer').innerHTML = `<p class="text-sm text-slate-400 italic">Data telah direset jam 23.00 WITA.</p>`;
+        document.getElementById('relativeTimeDisplay').innerText = "";
+        return;
+      }
+
+      let containerHtml = "";
+      let latestTimestamp = null;
+      const officers = ["Maliki", "Abd. Rauf Samad"];
+
+      officers.forEach(nama => {
+        const item = todayAttendanceData[nama] || { masuk: "-", pulang: "-", status: "menunggu", lastUpdated: null };
+        if (item.lastUpdated && (!latestTimestamp || item.lastUpdated > latestTimestamp)) {
+          latestTimestamp = item.lastUpdated;
+        }
+
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const sudahMasuk = item.masuk !== "-";
+      const sudahPulang = item.pulang !== "-";
+
+      let status = item.status;
+
+      // Status khusus tetap dipertahankan
+      if (["Izin", "Alpa", "Non Presensi"].includes(item.status)) {
+        status = item.status;
+
+      } else if (sudahMasuk && sudahPulang) {
+        // Sudah masuk dan sudah pulang
+        status = "Hadir";
+
+      } else if (sudahMasuk && !sudahPulang) {
+        // Sudah masuk tetapi belum pulang
+        if (nowMinutes > 270) { // lewat 04.30
+          status = "ATL";
+        } else {
+          status = "sedang bertugas";
+        }
+
+      } else if (!sudahMasuk && sudahPulang) {
+        // Tidak absen masuk tetapi sudah absen pulang
+        status = "Telat";
+
+      } else {
+        // Belum masuk dan belum pulang
+        if (nowMinutes > 30) { // lewat 00.30
+          status = "Menunggu Kehadiran";
+        } else {
+          status = "menunggu";
+        }
+      }
+
+      const statusBadge = getStatusBadge(status);
+
+        containerHtml += `
+          <div class="p-3.5 rounded-xl bg-blue-50 border border-slate-200 flex items-center justify-between">
+            <div>
+              <div class="text-base font-bold text-slate-800">${nama}</div>
+              <div class="text-[16px] text-slate-500 mt-1 flex items-center">
+                <span class="pr-3">
+                  <i class="fas fa-sign-in-alt text-emerald-600"></i> ${item.masuk}
+                </span>
+
+                <span class="border-l border-slate-300 pl-3">
+                  <i class="fas fa-sign-out-alt text-rose-600"></i> ${item.pulang}
+                </span>
+              </div>
+            </div>
+            <div>${statusBadge}</div>
+          </div>`;
+      });
+
+      document.getElementById('infoContentContainer').innerHTML = containerHtml;
+
+      const relDisplay = document.getElementById('relativeTimeDisplay');
+      if (latestTimestamp) {
+        relDisplay.innerText = getRelativeTime(latestTimestamp);
+      } else {
+        relDisplay.innerText = "";
+      }
+
+      if (todayNotesData.length > 0) {
+        let tableHtml = `
+          <table class="w-full text-left text-sm bg-white rounded-xl overflow-hidden border border-slate-200">
+            <thead>
+              <tr class="bg-white text-slate-700 border-b">
+                <th class="p-2 font-semibold">Petugas</th>
+                <th class="p-2 font-semibold">Jam</th>
+                <th class="p-2 font-semibold">Kejadian/Keadaan</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">`;
+        
+        todayNotesData.forEach(n => {
+          tableHtml += `
+            <tr>
+              <td class="p-2 font-medium text-slate-800">${n.nama}</td>
+              <td class="p-2 text-slate-500">${n.waktu}</td>
+              <td class="p-2 text-slate-600">${n.catatan}</td>
+            </tr>`;
+        });
+        tableHtml += `</tbody></table>`;
+        document.getElementById('notesTableContainer').innerHTML = tableHtml;
+      } else {
+        document.getElementById('notesTableContainer').innerHTML = `<p class="text-xs text-slate-400 italic">Belum ada catatan kejadian hari ini.</p>`;
+      }
+    }
+
+    function getStatusBadge(status) {
+      switch(status) {
+        case "sedang bertugas":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-amber-100 text-amber-700 animate-pulse"><i class="fas fa-shield-alt me-1"></i>Bertugas</span>`;
+        case "Hadir":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-emerald-100 text-emerald-700"><i class="fas fa-check-circle me-1"></i>Hadir</span>`;
+        case "ATL":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-orange-100 text-orange-700"><i class="fas fa-exclamation-triangle me-1"></i>ATL</span>`;
+        case "Izin":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-indigo-100 text-indigo-700">Izin</span>`;
+        case "Alpa":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-red-100 text-red-700">Alpa</span>`;
+        case "Non Presensi":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-slate-200 text-slate-700">Non Presensi</span>`;
+        case "Telat":
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-orange-100 text-orange-700"><i class="fas fa-clock me-1"></i>Telat</span>`;
+        default:
+          return `<span class="px-2.5 py-1 rounded-full text-sm bg-slate-100 text-slate-500"><i class="fas fa-clock me-1"></i>Menunggu</span>`;
+      }
+    }
+
+    function getRelativeTime(timestamp) {
+      const diffSec = Math.floor((new Date().getTime() - timestamp) / 1000);
+      if (diffSec < 60) return "Baru saja";
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin} menit yang lalu`;
+      const diffHour = Math.floor(diffMin / 60);
+      return `${diffHour} jam yang lalu`;
+    }
+
+    // 6. EKSEKUSI AKSEN & ADMIN LOGIC
+    function triggerAbsen(action) {
       if (!currentUser) return;
-      let url = "";
 
-      switch(type) {
-        case 'masuk': url = currentUser.linkAbsenMasuk; break;
-        case 'pulang': url = currentUser.linkAbsenPulang; break;
-        case 'catatan': url = currentUser.linkCatatan; break;
-        case 'izin': url = currentUser.linkIzin; break;
-        case 'alpa': url = currentUser.linkAlpa; break;
-        case 'nonPresensi': url = currentUser.linkNonPresensi; break;
-      }
+      apiRequest({
+        action: "save",
+        code: currentUser.code,
+        name: currentUser.user.name,
+        saveAction: action
+      })
+      .then(res => {
+        if (!res.success) {
+          showModal("Gagal", res.error || res.message || "Data gagal disimpan.", "red");
+          return;
+        }
 
-      if (url && url.startsWith('http')) {
-        window.open(url, '_blank');
-      } else if (url) {
-        window.open('https://' + url, '_blank');
-      } else {
-        alert("Link tidak tersedia pada spreadsheet!");
-      }
+        showModal("Sukses", `Data ${action.toLowerCase()} telah disimpan`, "emerald");
+
+        if (res.data) {
+          todayAttendanceData = res.data.attendance;
+          todayNotesData = res.data.notes;
+          renderInformationSection();
+          updateClock();
+        }
+      })
+      .catch(err => {
+        showModal("Gagal", err.message, "red");
+      });
     }
+
+    function triggerKetidakhadiran(action) {
+      if (!currentUser) return;
+
+      const loginCode = String(currentUser.code || '').trim().toUpperCase();
+      if (!(loginCode === "ADMIN01" || loginCode === "ADMIN02")) return;
+
+      // Admin01 -> Abd. Rauf Samad | Admin02 -> Maliki
+      let targets = [];
+      if (loginCode === "ADMIN01") {
+        targets = ["Abd. Rauf Samad"];
+      } else if (loginCode === "ADMIN02") {
+        targets = ["Maliki"];
+      }
+
+      apiRequest({
+        action: "save",
+        code: currentUser.code,
+        name: currentUser.user.name,
+        saveAction: action,
+        targetOfficers: JSON.stringify(targets)
+      })
+      .then(res => {
+        if (!res.success) {
+          showModal("Gagal", res.error || res.message || "Data gagal disimpan.", "red");
+          return;
+        }
+
+        showModal(
+          "Berhasil Menyimpan",
+          `Status ${action} telah diterapkan untuk ${targets.join(', ')}.`,
+          "indigo"
+        );
+
+        if (res.data) {
+          todayAttendanceData = res.data.attendance;
+          todayNotesData = res.data.notes;
+          renderInformationSection();
+          updateClock();
+        }
+      })
+      .catch(err => {
+        showModal("Gagal", err.message, "red");
+      });
+    }
+
+    function openNoteModal() {
+      document.getElementById('noteInput').value = "";
+      document.getElementById('noteModal').classList.remove('hidden');
+    }
+
+    function saveNote() {
+      const note = document.getElementById('noteInput').value.trim();
+      if (!note || !currentUser) return;
+
+      closeModal('noteModal');
+
+      apiRequest({
+        action: "save",
+        code: currentUser.code,
+        name: currentUser.user.name,
+        saveAction: "Catatan Kejadian",
+        note: note
+      })
+      .then(res => {
+        if (!res.success) {
+          showModal("Gagal", res.error || res.message || "Catatan gagal disimpan.", "red");
+          return;
+        }
+
+        showModal("Berhasil", "Catatan kejadian telah disimpan.", "amber");
+
+        if (res.data) {
+          todayAttendanceData = res.data.attendance;
+          todayNotesData = res.data.notes;
+          renderInformationSection();
+          updateClock();
+        }
+      })
+      .catch(err => {
+        showModal("Gagal", err.message, "red");
+      });
+    }
+
+    function showModal(title, message, themeColor) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('alertModal').classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.add('hidden');
+    }
+
+    fetchData();
   </script>
 </body>
 </html>
