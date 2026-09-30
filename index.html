@@ -125,7 +125,7 @@
             Catatan Khusus
           </div>
           <div class="text-[12px] font-normal opacity-90 mt-1 text-center">
-            Kejadian/Keadaan
+            Saat bertugas
           </div>
         </button>
 
@@ -333,7 +333,7 @@
 
     function doLogout() {
       currentUser = null;
-      document.getElementById('officerNameDisplay').innerText = "Belum Login";
+      document.getElementById('officerNameDisplay').innerText = " -";
       document.getElementById('loginCodeInput').value = "";
       document.getElementById('loginStatus').classList.add('hidden');
       document.getElementById('btnLogout').classList.add('hidden');
@@ -470,7 +470,7 @@
           <div class="py-2 px-3 rounded-lg bg-blue-50 border border-slate-200 flex items-center justify-between">
             <div>
               <div class="text-sm font-bold text-slate-800">${nama}</div>
-              <div class="text-[12px] text-slate-500 mt-0.5 flex items-center">
+              <div class="text-[13px] text-slate-500 mt-0.5 flex items-center">
                 <span class="pr-2">
                   <i class="fas fa-sign-in-alt text-emerald-600"></i> ${item.masuk}
                 </span>
@@ -510,7 +510,7 @@
         tableHtml += `</tbody></table>`;
         document.getElementById('notesTableContainer').innerHTML = tableHtml;
       } else {
-        document.getElementById('notesTableContainer').innerHTML = `<p class="text-[11px] text-slate-400 italic">Tidak ada catatan kejadian/keadaan hari ini.</p>`;
+        document.getElementById('notesTableContainer').innerHTML = `<p class="text-[12px] text-slate-400 italic">Tidak ada catatan kejadian/keadaan hari ini.</p>`;
       }
     }
 
