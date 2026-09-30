@@ -93,24 +93,6 @@
         Absen Kehadiran
       </h2>
       <div class="grid grid-cols-3 gap-2.5">
-        <!-- ABSEN MASUK -->
-        <button
-          id="btnAbsenMasuk"
-          onclick="triggerAbsen('Absen Masuk')"
-          disabled
-          class="w-full min-h-[125px] py-3 px-2 rounded-xl text-white font-bold flex flex-col items-center justify-center shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700"
-        >
-          <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-base mb-2">
-            <i class="fas fa-sign-in-alt"></i>
-          </div>
-          <div class="text-center leading-tight text-base">
-            Absen Masuk
-          </div>
-          <div class="text-[12px] font-normal opacity-85 mt-1">
-            00.00 – 00.30
-          </div>
-        </button>
-
         <!-- ABSEN PULANG -->
         <button
           id="btnAbsenPulang"
@@ -146,6 +128,25 @@
             Kejadian/Keadaan
           </div>
         </button>
+
+        <!-- ABSEN MASUK -->
+        <button
+          id="btnAbsenMasuk"
+          onclick="triggerAbsen('Absen Masuk')"
+          disabled
+          class="w-full min-h-[125px] py-3 px-2 rounded-xl text-white font-bold flex flex-col items-center justify-center shadow-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700"
+        >
+          <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-base mb-2">
+            <i class="fas fa-sign-in-alt"></i>
+          </div>
+          <div class="text-center leading-tight text-base">
+            Absen Masuk
+          </div>
+          <div class="text-[12px] font-normal opacity-85 mt-1">
+            00.00 – 00.30
+          </div>
+        </button>
+
       </div>
     </div>
 
@@ -157,14 +158,6 @@
       </h2>
       <div class="grid grid-cols-3 gap-2.5">
         <button
-          id="btnIzin"
-          onclick="triggerKetidakhadiran('Izin')"
-          class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
-        >
-          <i class="fas fa-file-signature text-base"></i>
-          Izin
-        </button>
-        <button
           id="btnAlpa"
           onclick="triggerKetidakhadiran('Alpa')"
           class="py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
@@ -172,6 +165,7 @@
           <i class="fas fa-user-times text-base"></i>
           Alpa
         </button>
+
         <button
           id="btnNonPresensi"
           onclick="triggerKetidakhadiran('Non Presensi')"
@@ -180,6 +174,16 @@
           <i class="fas fa-minus-circle text-base"></i>
           Non Presensi
         </button>
+
+        <button
+          id="btnIzin"
+          onclick="triggerKetidakhadiran('Izin')"
+          class="py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow flex flex-col items-center justify-center gap-1"
+        >
+          <i class="fas fa-file-signature text-base"></i>
+          Izin
+        </button>
+
       </div>
     </div>
 
