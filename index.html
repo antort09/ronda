@@ -338,16 +338,14 @@
 
     // ==========================================================
     // BACKEND GOOGLE APPS SCRIPT
-    // Ganti URL di bawah dengan URL Web App Apps Script Anda.
-    // Contoh: https://script.google.com/macros/s/AKfycb.../exec
     // ==========================================================
-    const API_URL = "PASTE_URL_WEB_APP_APPS_SCRIPT_DI_SINI";
+    const API_URL = "https://script.google.com/macros/s/AKfycbx3PfqPJ_D5mLLESdyCaOayN75wwpfNySqT221MEym-5fzYxnzLaWWvc9k09nSTq8fPug/exec";
 
     // Komunikasi GitHub Pages -> Google Apps Script menggunakan JSONP.
     // Cara ini tidak memerlukan google.script.run.
     function apiRequest(params) {
       return new Promise((resolve, reject) => {
-        if (!API_URL || API_URL.includes("PASTE_URL")) {
+        if (!API_URL || API_URL.includes("https://script.google.com/macros/s/AKfycbx3PfqPJ_D5mLLESdyCaOayN75wwpfNySqT221MEym-5fzYxnzLaWWvc9k09nSTq8fPug/exec")) {
           reject(new Error("API_URL belum diisi."));
           return;
         }
