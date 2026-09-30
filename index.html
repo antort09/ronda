@@ -417,11 +417,11 @@
 
       if (currentHours === 23) {
         document.getElementById('infoContentContainer').innerHTML = `
-          <div class="text-center py-6 text-slate-400 text-xs">
+          <div class="text-center py-6 text-slate-400 text-sm">
             <i class="fas fa-moon text-lg mb-1 block text-slate-300"></i>
             Informasi ronda menunggu hari berikutnya.
           </div>`;
-        document.getElementById('notesTableContainer').innerHTML = `<p class="text-xs text-slate-400 italic">Data telah direset jam 23.00 WITA.</p>`;
+        document.getElementById('notesTableContainer').innerHTML = `<p class="text-sm text-slate-400 italic">Data telah direset jam 23.00 WITA.</p>`;
         document.getElementById('relativeTimeDisplay').innerText = "";
         return;
       }
@@ -446,7 +446,7 @@
         } else if (sudahMasuk && sudahPulang) {
           status = "Hadir";
         } else if (sudahMasuk && !sudahPulang) {
-          if (nowMinutes > 270) {
+          if (nowMinutes > 300) {
             status = "ATL";
           } else {
             status = "sedang bertugas";
@@ -455,7 +455,7 @@
           status = "Telat";
         } else {
           if (nowMinutes > 30) {
-            status = "Menunggu Kehadiran";
+            status = "?";
           } else {
             status = "menunggu";
           }
@@ -465,8 +465,8 @@
         containerHtml += `
           <div class="py-2 px-3 rounded-lg bg-blue-50 border border-slate-200 flex items-center justify-between">
             <div>
-              <div class="text-xs font-bold text-slate-800">${nama}</div>
-              <div class="text-[11px] text-slate-500 mt-0.5 flex items-center">
+              <div class="text-sm font-bold text-slate-800">${nama}</div>
+              <div class="text-[12px] text-slate-500 mt-0.5 flex items-center">
                 <span class="pr-2">
                   <i class="fas fa-sign-in-alt text-emerald-600"></i> ${item.masuk}
                 </span>
@@ -485,7 +485,7 @@
 
       if (todayNotesData.length > 0) {
         let tableHtml = `
-          <table class="w-full text-left text-xs bg-white rounded-xl overflow-hidden border border-slate-200">
+          <table class="w-full text-left text-sm bg-white rounded-xl overflow-hidden border border-slate-200">
             <thead>
               <tr class="bg-white text-slate-700 border-b">
                 <th class="p-2 font-semibold">Petugas</th>
@@ -506,7 +506,7 @@
         tableHtml += `</tbody></table>`;
         document.getElementById('notesTableContainer').innerHTML = tableHtml;
       } else {
-        document.getElementById('notesTableContainer').innerHTML = `<p class="text-[10px] text-slate-400 italic">Belum ada catatan kejadian hari ini.</p>`;
+        document.getElementById('notesTableContainer').innerHTML = `<p class="text-[11px] text-slate-400 italic">Tidak ada catatan kejadian/keadaan hari ini.</p>`;
       }
     }
 
